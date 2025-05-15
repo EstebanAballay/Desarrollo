@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { OrdersController } from './orders/orders.controller';
+import { OrdersService } from './orders/orders.service';
 import { Order } from './orders/order.entity';
-import { OrdersModule } from './orders/orders.module';
-import { PaymentsModule } from './payments/payments.module';
+
+import { PaymentsController } from './payments/payments.controller';
+import { PaymentsService } from './payments/payments.service';
 
 
 @Module({
@@ -14,13 +18,12 @@ import { PaymentsModule } from './payments/payments.module';
       username: 'postgres',
       password: 'mipassword',
       database: 'ordenes_pagos',
-      entities: [Order], // Carga las entidades automaticamente
-      synchronize: true, //“sincroniza las entidades con la base de datos”, es decir: crea (o actualiza) automáticamente las tablas.
+      entities: [Order], // Se importan las entidades
+      synchronize: true,
     }),
-    OrdersModule,
-    PaymentsModule,
+    TypeOrmModule.forFeature([Order]), // Se importan entidades para usar en los services
   ],
+  controllers: [OrdersController, PaymentsController], // Se importan los controladores
+  providers: [OrdersService, PaymentsService], // Se importan los servicios
 })
-
-
 export class AppModule {}
