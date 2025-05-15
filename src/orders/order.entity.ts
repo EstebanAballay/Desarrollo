@@ -5,7 +5,7 @@ export class Order {
   id: number;
 
   @Column()
-  userId: number;
+  userId: number; // como importo los usuarios?
 
   @Column()
   restaurantId: number;
