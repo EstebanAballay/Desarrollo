@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { State } from './state.entity';
+
 @Entity()
 export class Order {
   @PrimaryGeneratedColumn()
@@ -9,9 +18,6 @@ export class Order {
 
   @Column()
   restaurantId: number;
-
-  @Column({ default: 'pending' })
-  status: string;
 
   @Column({ nullable: true })
   delivery: string;
@@ -24,10 +30,11 @@ export class Order {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column({ default: 1 }) // Estado por defecto: pending (id = 1)
+  stateId: number;
+
+  @ManyToOne(() => State, state => state.orders)
+  @JoinColumn({ name: 'stateId' })
+  state: State;
 }
-
-// @Column('int', { array: true }) sirve para guardar products: [1, 2].
-
-// @Column({ type: 'json' }) es ideal para guardar objetos como location.
-
-// @CreateDateColumn() guarda la fecha de creación automáticamente.
