@@ -11,7 +11,7 @@ import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 
 import { paymentmethod } from './payments/paymentmethod.entity';
-import { transactionDetail } from './payments/transactionDetail.entiy';
+import { transactionDetail } from './payments/transactionDetail.entity';
 import { transactionStatus } from './payments/transactionstatus.entity';
 import {AppController} from './app.controller'
 
@@ -20,7 +20,7 @@ import {AppController} from './app.controller'
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
-      port: 5433,
+      port: 5432,
       username: 'postgres',
       password: 'mipassword',
       database: 'ordenes_pagos',
