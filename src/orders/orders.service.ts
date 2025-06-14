@@ -6,10 +6,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 @Injectable()
 export class OrdersService {
-  constructor(
-    @InjectRepository(Order)
-    private readonly orderRepo: Repository<Order>,
-  ) {}
+  constructor(@InjectRepository(Order)private readonly orderRepo: Repository<Order>,) {}
 
   async create(dto: CreateOrderDto) {
     const order = this.orderRepo.create({
