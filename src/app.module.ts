@@ -4,14 +4,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrdersController } from './orders/orders.controller';
 import { OrdersService } from './orders/orders.service';
 import { Order } from './orders/order.entity';
-import { State } from './orders/state.entity';
+
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { Transaction } from './payments/transaction.entity'; 
 
 import { PaymentsModule } from './payments/payments.module';
 
-import { paymentmethod } from './payments/paymentmethod.entity';
+import { PaymentMethod } from './payments/paymentmethod.entity';
 import { transactionDetail } from './payments/transactionDetail.entity';
 import { transactionStatus } from './payments/transactionstatus.entity';
 
@@ -24,14 +24,10 @@ import { transactionStatus } from './payments/transactionstatus.entity';
       username: 'postgres',
       password: 'mipassword',
       database: 'ordenes_pagos',
-      entities: [
-      Order, Transaction, State, transactionDetail, transactionStatus, paymentmethod
-      ],
+      entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Order, paymentmethod, transactionDetail, transactionStatus, State]),
-    PaymentsModule,
-  ],
+    TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction]),PaymentsModule],
   controllers: [OrdersController, AppController],
   providers: [OrdersService, AppService],
 })

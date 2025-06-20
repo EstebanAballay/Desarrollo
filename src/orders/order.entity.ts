@@ -1,12 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { State } from './state.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Order {
@@ -19,8 +11,11 @@ export class Order {
   @Column()
   restaurantId: number;
 
-  @Column({ nullable: true })
-  delivery: string;
+  @Column({ default: 'pending' })
+  status: string;
+
+  @Column({ type: 'jsonb', nullable: true })  // nullable si puede ser opcional
+  delivery: any;
 
   @Column('int', { array: true })
   products: number[];
@@ -30,11 +25,5 @@ export class Order {
 
   @CreateDateColumn()
   createdAt: Date;
-
-  @Column({ default: 1 }) // Estado por defecto: pending (id = 1)
-  stateId: number;
-
-  @ManyToOne(() => State, state => state.orders)
-  @JoinColumn({ name: 'stateId' })
-  state: State;
 }
+

@@ -1,4 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column,ManyToOne,JoinColumn,OneToOne } from 'typeorm';
+import { PaymentMethod } from './paymentmethod.entity';
+import { transactionDetail } from './transactionDetail.entity';
 
 @Entity()
 export class Transaction {
@@ -11,14 +13,15 @@ export class Transaction {
     @Column()
     amount: number;
 
-    @Column()
-    paymentMethod: string;
+    //En esta columna de la bd guardo el puntero al metodo de pago
+    @ManyToOne(() => PaymentMethod, paymentMethod => paymentMethod.transactions, { eager: true })
+    @JoinColumn({ name: 'payment_method_id' })
+    paymentMethod: PaymentMethod;
 
-    @Column('json')
-    transactionDetails: {
-      transactionId: string;
-      paymentStatus: string;
-    };
+    //En esta columna de la bd guardo el puntero al detalle de la transaccion
+    @OneToOne(() => transactionDetail, transactionDetail => transactionDetail.transactionId, { cascade: true })
+    @JoinColumn()
+    transactionDetails: transactionDetail;
 
     @Column()
     paymentTime: string;
@@ -35,4 +38,5 @@ export class Transaction {
 
     @Column({ nullable: true })
     refundTime?: string;
+    name: any;
 }

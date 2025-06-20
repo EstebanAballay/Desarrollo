@@ -1,15 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Transaction } from './transaction.entity';
+
 @Entity()
-export class paymentmethod {
-  @PrimaryGeneratedColumn()
-  id: number;
+export class PaymentMethod {
+    @PrimaryGeneratedColumn()
+    id: number;
 
-  @Column()
-  name: string;
+    @Column({ unique: true })
+    name: string;
 
-  @Column()
-  code: string; //Codigo de representacion de forma de pago, ej: efectivo "EF"
-
-
-  //Creo que falta las relaciones en la bd
+    @OneToMany(() => Transaction, transaction => transaction.paymentMethod)
+    transactions: Transaction[];
 }

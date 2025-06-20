@@ -1,35 +1,15 @@
-INSERT INTO order(
-    id, 
-    userId, 
-    restaurantId, 
-    delivery,
-    products, 
-    location,
-    createdAt,
-    stateId)
-    
-     VALUES (1, 'ORD123456', 'John Doe', 150.00, ' -10-01', 'Pending')
+-- Script SQL para poblar la tabla payment_methods con datos iniciales (solo id y name)
+-- Solo se pueden crear pagos con estos metodos,sino tirara error
 
-@PrimaryGeneratedColumn()
-  id: number;
+INSERT INTO payment_method (name) VALUES 
+('Visa'),
+('MasterCard'),
+('MP'),
+('Efectivo'),
+('Transferencia Bancaria'),
+('PayPal');
 
-  @Column()
-  userId: number;
-
-  @Column()
-  restaurantId: number;
-
-  @Column({ nullable: true })
-  delivery: string;
-
-  @Column('int', { array: true })
-  products: number[];
-
-  @Column({ type: 'json' })
-  location: any;
-
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @Column({ default: 1 }) // Estado por defecto: pending (id = 1)
-  stateId: number;
+INSERT INTO transaction_status (name) VALUES 
+('Pending'),
+('completed'),
+('refunded');

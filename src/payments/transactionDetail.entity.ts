@@ -1,20 +1,22 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { State } from '../orders/state.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToOne} from 'typeorm';
+import { transactionStatus } from './transactionstatus.entity';
+import { Transaction } from './transaction.entity';
+import { v4 as uuidv4 } from 'uuid';
+
+
 @Entity()
 export class transactionDetail {
-    @PrimaryGeneratedColumn()
-    transactionId: number;
+    @PrimaryGeneratedColumn('uuid')
+    transactionId:string;
 
     @Column({default:1})
     paymentStateId: number; 
 
-    @Column()
-    transaction:number;
-
-    @Column()
-    productId:number;
-
-    @ManyToOne(() => State)
+    @ManyToOne(() => transactionStatus)
     @JoinColumn({ name: 'paymentStateId' })
-    paymentState: State;
+    paymentState: transactionStatus;
+
+    /*
+    @OneToOne(() => Transaction, transaction => transaction.transactionDetails)
+    transaction: Transaction;*/
 };
