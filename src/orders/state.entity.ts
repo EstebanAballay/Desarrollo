@@ -1,3 +1,4 @@
+/*
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Order } from './order.entity';
 
@@ -15,4 +16,4 @@ export class State {
   @OneToMany(() => Order, order => order.state)
   orders: Order[];
 }
-
+*/

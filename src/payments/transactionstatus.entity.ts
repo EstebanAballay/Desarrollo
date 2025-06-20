@@ -5,8 +5,5 @@ export class transactionStatus {
   id: number;
 
   @Column()
-  value: string;
-
-  @Column()
-  description: string; 
+  name: string;
 }
