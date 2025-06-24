@@ -13,6 +13,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {Order} from './order.entity';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { partialUpdateOrderDto } from './dto/partialUpdate-order.dto';
 
 @Controller('order')
 export class OrdersController {
@@ -64,25 +65,19 @@ export class OrdersController {
   }
 
   @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderDto,
-  ): Promise<any> {
+  async update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto): Promise<any> {
     const updatedOrder = await this.ordersService.updateOrder(Number(id), updateOrderDto);
 
     return {
       id: updatedOrder.id,
-      status: updatedOrder.status,
+      status: updatedOrder.status.value,
       delivery: updatedOrder.delivery,
       location: updatedOrder.location,
     };
   }
-
+ 
   @Patch(':id')
-  async updatePartial(
-    @Param('id') id: string,
-    @Body() updateOrderDto: UpdateOrderDto,
-  ): Promise<any> {
+  async updatePartial(@Param('id') id: string, @Body() updateOrderDto: partialUpdateOrderDto): Promise<any> {
     const order = await this.ordersService.updatePartialOrder(Number(id), updateOrderDto);
 
     return {
@@ -99,45 +94,3 @@ export class OrdersController {
     return { message: 'deleted' };
   }
 }
-
-
-
-/*
-@Controller('order')
-export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
-
-  // Crear una orden
-  @Post()
-  create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.create(dto);
-  }
-
-  // Listar todas las órdenes
-  @Get()
-  findAll() {
-    return this.ordersService.findAll();
-  }
-
-  // Obtener una orden por ID
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.ordersService.findOne(+id);
-  }
-
-  // Actualizar el estado de una orden (por ID de estado)
-  @Patch(':id')
-  updateState(
-    @Param('id') id: number,
-    @Body() body: { state: number } // ⚠️ Se espera un número (ID del estado)
-  ) {
-    return this.ordersService.updateState(+id, body.state);
-  }
-
-  // Eliminar una orden
-  @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.ordersService.remove(+id);
-  }
-}
-*/

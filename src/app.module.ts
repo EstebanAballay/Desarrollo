@@ -14,6 +14,8 @@ import { PaymentsModule } from './payments/payments.module';
 import { PaymentMethod } from './payments/paymentmethod.entity';
 import { transactionDetail } from './payments/transactionDetail.entity';
 import { transactionStatus } from './payments/transactionstatus.entity';
+import { State } from './orders/state.entity';
+import { refund } from './payments/refund.entity';
 
 @Module({
   imports: [
@@ -24,10 +26,10 @@ import { transactionStatus } from './payments/transactionstatus.entity';
       username: 'postgres',
       password: 'mipassword',
       database: 'ordenes_pagos',
-      entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod],
+      entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod, State,refund],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction]),PaymentsModule],
+    TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction, State,refund]),PaymentsModule],
   controllers: [OrdersController, AppController],
   providers: [OrdersService, AppService],
 })

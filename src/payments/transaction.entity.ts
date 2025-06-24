@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column,ManyToOne,JoinColumn,OneToOne } from 'typeorm';
 import { PaymentMethod } from './paymentmethod.entity';
 import { transactionDetail } from './transactionDetail.entity';
+import {refund} from './refund.entity';
 
 @Entity()
 export class Transaction {
@@ -29,14 +30,9 @@ export class Transaction {
     @Column({ default: 'paid' })
     status: string;
 
-    @Column('json', { nullable: true })
-    refundDetails?: {
-      refundTransactionId: string;
-      refundStatus: string;
-      reason?: string;
-    };
+    @OneToOne(() => refund)
+    @JoinColumn({ name: 'refundId' })
+    refundDetails?: refund;
 
-    @Column({ nullable: true })
-    refundTime?: string;
-    name: any;
 }
+
