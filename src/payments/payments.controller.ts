@@ -48,7 +48,7 @@ export class PaymentsController {
     @Put(':id/status')
     async updateStatus(@Param('id') id: number, @Body() status: UpdateStatusDto) {
         const payment = await this.paymentsService.updatePaymentStatus(id, status);
-        return (payment);
+        return this.formatResponse(payment);
     }
 
     @Post(':id/refund')
