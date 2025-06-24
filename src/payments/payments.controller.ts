@@ -13,20 +13,21 @@ export class PaymentsController {
         const pageNumber = parseInt(page);
         const limitNumber = parseInt(limit);
         const { data, total } = await this.paymentsService.findAllPayments(pageNumber, limitNumber);
-        
-        //Aca no uso el formatResponse porque prefiero una arrowfunction 
+        console.log(data[0]);
+
+        //Aca no uso el formatResponse porque prefiero una arrowfunction dado que tengo un array
         return {
             data: data.map(payment => ({
                 id: payment.id,
                 orderId: payment.orderId,
                 amount: payment.amount,
                 transactionDetails: {transactionId: payment.transactionDetails.transactionId,
-                                     paymentStatus: payment.transactionDetails.paymentStateId
+                                     paymentStatus: payment.transactionDetails.paymentState.name,
                 },  
-                paymentMethod: payment.name,
+                paymentMethod: payment.paymentMethod.name,
                 paymentTime: payment.paymentTime
             })),
-            total,
+            total, 
             page: pageNumber,
             limit: limitNumber,
         };
@@ -53,7 +54,7 @@ export class PaymentsController {
     @Post(':id/refund')
     async refundPayment(@Param('id') id: number, @Body() refund: RefundDto) {
         const payment = this.paymentsService.refundPayment(id, refund);
-        return this.formatResponse(payment);
+        return payment;
     }
 
     @Delete(':id')
@@ -67,11 +68,11 @@ export class PaymentsController {
         return {
             id: payment.id,
             orderId: payment.orderId,
-            status: payment.status,
+            status: payment.status.value,
             amount: payment.amount,
             transactionDetails: {
                 transactionId: payment.transactionDetails.transactionId,
-                paymentStatus: payment.transactionDetails.paymentStatus
+                paymentStatus: payment.transactionDetails.paymentState.name, 
             },
             paymentMethod: payment.paymentMethod.name,
             paymentTime: payment.paymentTime,

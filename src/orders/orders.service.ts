@@ -3,17 +3,25 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
-
+import { State } from './state.entity'; 
+import { UpdateOrderDto } from './dto/update-order.dto'; 
+import { partialUpdateOrderDto } from './dto/partialUpdate-order.dto';
 
 @Injectable()
 export class OrdersService {
   constructor(
-    @InjectRepository(Order) private readonly ordersRepository: Repository<Order>) {}
+    @InjectRepository(Order) private readonly ordersRepository: Repository<Order>,
+    @InjectRepository(State) private readonly stateRepository: Repository<State>) {}
 
   async createOrder(data: CreateOrderDto): Promise<Order> {
+    // Por defecto,asignammos pending,por eso lo buscamos en la bd
+    const defaultState = await this.stateRepository.findOne({ where: { value: 'pending' } });
+    if (!defaultState) {
+      throw new NotFoundException('Default state "pending" not found');
+    }
     const newOrder = this.ordersRepository.create({
       ...data,
-      status: 'pending',
+      status: defaultState,
       delivery: null,
     });
     return this.ordersRepository.save(newOrder);
@@ -23,7 +31,8 @@ export class OrdersService {
   const [result, total] = await this.ordersRepository.findAndCount({
     skip: (page - 1) * limit,
     take: limit,
-    order: { id: 'ASC' }, // orden opcional
+    order: { id: 'ASC' }, 
+    relations: ['status'], 
   });
 
   return {
@@ -33,30 +42,59 @@ export class OrdersService {
 }
 
   async getOrderById(id: number): Promise<Order> {
-    const order = await this.ordersRepository.findOne({ where: { id } });
+    const order = await this.ordersRepository.findOne({ where: { id }, relations: ['status'] });
     if (!order) {
       throw new NotFoundException(`Order with id ${id} not found`);
     }
     return order;
   }
 
-  async updateOrder(id: number, data: Partial<Order>): Promise<Order> {
-    await this.ordersRepository.update(id, data);
-    const updatedOrder = await this.ordersRepository.findOneBy({ id });
-    if (!updatedOrder) {
-      throw new NotFoundException(`Order with id ${id} not found`);
+  async updateOrder(id: number, data:UpdateOrderDto): Promise<Order> {
+    const newStatus = await this.stateRepository.findOne({ where: { value: data.status } });
+
+    //La validacion de abajo esta para que no tire error cuando actuliza, sino encuentra un estado valido
+    if (!newStatus) {
+      throw new NotFoundException(`Status with value ${data.status} not found`);
     }
-    return updatedOrder;
+
+    //Esta linea actualza la orden(data) con el id dado
+    await this.ordersRepository.update(id, {
+    ...data,
+    status: newStatus  // asignamos el objeto completo
+  });
+    
+    const updatedOrder = await this.ordersRepository.findOne({
+      where: { id },             
+      relations: ['status']});
+
+    if (!updatedOrder) {
+      throw new NotFoundException(`Order with id ${id} not found`);}
+
+  return updatedOrder;
   }
 
-  async updatePartialOrder(id: number, updates: Partial<Order>): Promise<Order> {
-    await this.ordersRepository.update(id, updates);
-    const updatedOrder = await this.ordersRepository.findOneBy({ id });
+  async updatePartialOrder(id: number, data: partialUpdateOrderDto): Promise<Order> {
+    //Esta linea busca el objeto status por su nombre en la base de datos
+    const newStatus = await this.stateRepository.findOne({ where: { value: data.status } });
+
+    //La validacion de abajo esta para que no tire error cuando actuliza, sino encuentra un estado valido
+    if (!newStatus) {
+      throw new NotFoundException(`Status with value ${data.status} not found`);}
+
+    await this.ordersRepository.update(id, {
+    ...data,
+    status: newStatus});
+
+    const updatedOrder = await this.ordersRepository.findOne({ 
+      where: { id },
+      relations: ['status']  // Aseguramos que el estado se cargue
+     });
+     
     if (!updatedOrder) {
-      throw new NotFoundException(`Order with id ${id} not found`);
-    }
-    return updatedOrder;
-  }
+      throw new NotFoundException(`Order with id ${id} not found`);}
+
+   return updatedOrder;
+    };
 
   async deleteOrder(id: number): Promise<void> {
     const result = await this.ordersRepository.delete(id);
@@ -67,39 +105,3 @@ export class OrdersService {
 }
 
 
-
-/*
-@Injectable()
-export class OrdersService {
-  constructor(@InjectRepository(Order)private readonly orderRepo: Repository<Order>,) {}
-
-  async create(dto: CreateOrderDto) {
-    const order = this.orderRepo.create({
-      ...dto,
-      // No hace falta pasar stateId si usás default
-    });
-
-    return this.orderRepo.save(order);
-  }
-
-  findAll() {
-    return this.orderRepo.find({ relations: ['state'] });
-  }
-
-  findOne(id: number) {
-    return this.orderRepo.findOne({
-      where: { id },
-      relations: ['state'],
-    });
-  }
-
-  async updateState(id: number, newStateId: number) {
-    return this.orderRepo.update(id, { stateId: newStateId });
-  }
-
-  async remove(id: number) {
-    await this.orderRepo.delete(id);
-    return { message: 'deleted' };
-  }
-}
-*/

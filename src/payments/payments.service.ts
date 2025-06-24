@@ -9,21 +9,22 @@ import { RefundDto } from './dto/refund.dto';
 
 import { Transaction } from './transaction.entity';
 import { PaymentMethod } from './paymentmethod.entity';
-//import { transactionDetail } from './transactionDetail.entity';
 import {transactionStatus} from './transactionstatus.entity';
 import { transactionDetail } from './transactionDetail.entity';
+import {refund} from './refund.entity';
 
 @Injectable()
 export class PaymentsService {
     constructor(@InjectRepository(Transaction) private transactionRepo: Repository<Transaction>,
                 @InjectRepository(PaymentMethod) private paymentMethodRepo: Repository<PaymentMethod>,
                 @InjectRepository(transactionStatus) private transactionStatusRepo: Repository<transactionStatus>,
-                @InjectRepository(transactionDetail) private transactionDetailRepo: Repository<transactionDetail>) {}
+                @InjectRepository(transactionDetail) private transactionDetailRepo: Repository<transactionDetail>,
+                @InjectRepository(refund) private readonly refundRepo: Repository<refund>) {}
 
 
     async findAllPayments(page = 1, limit = 10): Promise<{ data: Transaction[]; total: number }> {
         const [data, total] = await this.transactionRepo.findAndCount({
-            relations:['transactionDetails'],
+            relations:['transactionDetails', 'transactionDetails.paymentState', 'paymentMethod'],
         skip: (page - 1) * limit,
         take: limit,
     });
@@ -31,11 +32,11 @@ export class PaymentsService {
     return { data, total };
     }   
 
-
+ 
     async findPaymentById(id: number) {
         const payment = await this.transactionRepo.findOne({ 
             where: { id },
-            relations: ['paymentMethod']
+            relations: ['paymentMethod', 'transactionDetails', 'transactionDetails.paymentState'],
         });
         if (!payment) throw new NotFoundException('Payment not found');
         return payment;
@@ -56,6 +57,8 @@ export class PaymentsService {
         if (!paymentState) {
             throw new BadRequestException(`Payment state '${data.transactionDetails.paymentStatus}' not found`);
         }
+
+        //Debo crear el detalle(patron creador el todo crea a sus partes)
         const transactionDetail = this.transactionDetailRepo.create({
         paymentState: paymentState, 
         });
@@ -77,7 +80,7 @@ export class PaymentsService {
     async updatePaymentStatus(id: number, dto: UpdateStatusDto) {
         //Primero busco el pago por id
         const payment = await this.findPaymentById(id);
-        //luego compruebo que ese estado exista
+        //luego compruebo que ese estado exista y sino lanza error
         const paymentState = await this.transactionStatusRepo.findOne({
             where: { name: dto.status}
         });
@@ -86,22 +89,49 @@ export class PaymentsService {
         }
         //finalmente actualizo ambos estados
         payment.status = dto.status;
-        payment.transactionDetails.paymentStateId = paymentState.id;
-
-        return this.transactionRepo.save(payment);
+        payment.transactionDetails.paymentState = paymentState;
+        //Guardo el cambio, NO OLVIDAR EL AWAIT,SINO SE GUARDAN LOS CAMBIOS A LA SIGUIENTE PETICION 
+        await this.transactionRepo.save(payment);
+        //Devuelvo el objeto actualizado
+        return this.findPaymentById(id);
     }
 
     async refundPayment(id: number, dto: RefundDto) {
+        //Primero creo el refund
+        const refund = this.refundRepo.create({
+            reason: dto.reason,
+            refundTime: new Date().toISOString()
+        })
+        //Ahora cambio el estado de la transaccion a "refunded"
+        const refundState = await this.transactionStatusRepo.findOne({
+            where: { name: 'refunded' }});
+        if (!refundState) {
+            throw new BadRequestException(`Payment state 'refunded' not found`);}
+
+        const paymentToRefund = await this.findPaymentById(id);
+        if (!paymentToRefund) {
+            throw new NotFoundException(`Payment with id ${id} not found`);
+        }
+        
+        paymentToRefund.transactionDetails.paymentState = refundState;
+        await this.transactionRepo.save(paymentToRefund);
+        //Ahora busco el pago para el cual asignare el refund creado
         const payment = await this.findPaymentById(id);
-        payment.status = 'refunded';
-        payment.refundDetails = {
-        refundTransactionId: `refund_${Date.now()}`,
-        refundStatus: 'completed',
-        reason: dto.reason,
-        };
-        payment.refundTime = new Date().toISOString();
-        return this.transactionRepo.save(payment);
-    }
+        //Ahora asigno el refund al pago
+        payment.refundDetails = refund;
+        await this.refundRepo.save(refund); 
+        //formateo aca en vez de en el controller
+        return {
+            id : payment.id,
+            orderId: payment.orderId,
+            status: payment.transactionDetails.paymentState.name,
+            refundDetails: {
+                refundTransactionId: refund.refunId,
+                refundStatus: "completed"},
+            paymentMethod: payment.paymentMethod.name,
+            refundTime: refund.refundTime
+            };
+    };
 
     async deletePayment(id: number) {
         const payment = await this.findPaymentById(id);
