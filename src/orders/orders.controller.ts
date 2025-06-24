@@ -41,9 +41,9 @@ export class OrdersController {
   const { data, total } = await this.ordersService.getAllOrders(pageNumber, limitNumber);
 
   return {
-    data: data.map(order => ({
+    data: data.map(order => ({ 
       id: order.id,
-      status: order.status,
+      status: order.status.value,
       delivery: order.delivery,
       location: order.location,
     })),
@@ -58,7 +58,7 @@ export class OrdersController {
     const order = await this.ordersService.getOrderById(Number(id));
     return {
       id: order.id,
-      status: order.status,
+      status: order.status.value,
       delivery: order.delivery,
       location: order.location,
     };
@@ -82,7 +82,7 @@ export class OrdersController {
 
     return {
       id: order.id,
-      status: order.status,
+      status: order.status.value,
       delivery: order.delivery,
       location: order.location,
     };
