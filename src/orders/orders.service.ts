@@ -32,6 +32,7 @@ export class OrdersService {
     skip: (page - 1) * limit,
     take: limit,
     order: { id: 'ASC' }, 
+    relations: ['status'], 
   });
 
   return {
@@ -41,7 +42,7 @@ export class OrdersService {
 }
 
   async getOrderById(id: number): Promise<Order> {
-    const order = await this.ordersRepository.findOne({ where: { id } });
+    const order = await this.ordersRepository.findOne({ where: { id }, relations: ['status'] });
     if (!order) {
       throw new NotFoundException(`Order with id ${id} not found`);
     }
