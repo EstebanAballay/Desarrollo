@@ -7,7 +7,7 @@ import { RefundDto } from './dto/refund.dto';
 @Controller('payments')
 export class PaymentsController {
     constructor(private readonly paymentsService: PaymentsService) {}
-
+    
     @Get()
     async findAllPayments(@Query('page') page = '1', @Query('limit') limit = '10') {
         const pageNumber = parseInt(page);
