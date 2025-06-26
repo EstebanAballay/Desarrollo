@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Param, Body, Put, Delete,Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Put, Delete,Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { RefundDto } from './dto/refund.dto';
+import { AuthGuard } from "../auth/guard/auth.guard";
 
 @Controller('payments')
 export class PaymentsController {
     constructor(private readonly paymentsService: PaymentsService) {}
     
     @Get()
+    @UseGuards(AuthGuard)
     async findAllPayments(@Query('page') page = '1', @Query('limit') limit = '10') {
         const pageNumber = parseInt(page);
         const limitNumber = parseInt(limit);
@@ -34,30 +36,35 @@ export class PaymentsController {
     }
 
     @Get(':id')
+    @UseGuards(AuthGuard)
     async findOne(@Param('id', ParseIntPipe) id: number) {
         const payment = await this.paymentsService.findPaymentById(id);
         return this.formatResponse(payment);
     }
 
     @Post()
+    @UseGuards(AuthGuard)
     async createPayment(@Body() paymentData: CreatePaymentDto) {
         const payment = await this.paymentsService.createPayment(paymentData);
         return this.formatResponse(payment);
     }
 
     @Put(':id/status')
+    @UseGuards(AuthGuard)
     async updateStatus(@Param('id') id: number, @Body() status: UpdateStatusDto) {
         const payment = await this.paymentsService.updatePaymentStatus(id, status);
         return this.formatResponse(payment);
     }
 
     @Post(':id/refund')
+    @UseGuards(AuthGuard)
     async refundPayment(@Param('id') id: number, @Body() refund: RefundDto) {
         const payment = this.paymentsService.refundPayment(id, refund);
         return payment;
     }
 
     @Delete(':id')
+    @UseGuards(AuthGuard)
     deletePayment(@Param('id') id: number) {
         //aca no hace falta el formatresponse porque solo devuelve un mensaje
         return this.paymentsService.deletePayment(id);

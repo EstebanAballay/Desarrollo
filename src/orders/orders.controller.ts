@@ -7,19 +7,22 @@ import {
   Patch,
   Delete,
   Put,
-  Query
+  Query,
+  UseGuards
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {Order} from './order.entity';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { partialUpdateOrderDto } from './dto/partialUpdate-order.dto';
+import { AuthGuard } from "../auth/guard/auth.guard";
 
 @Controller('order')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @UseGuards(AuthGuard)
   async create(@Body() createOrderDto: CreateOrderDto): Promise<any> {
     const order: Order = await this.ordersService.createOrder(createOrderDto);
 
@@ -32,6 +35,7 @@ export class OrdersController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll(
   @Query('page') page = '1',
   @Query('limit') limit = '10'): Promise<any> {
@@ -54,6 +58,7 @@ export class OrdersController {
 }
 
   @Get(':id')
+  @UseGuards(AuthGuard)
   async findOne(@Param('id') id: string): Promise<any> {
     const order = await this.ordersService.getOrderById(Number(id));
     return {
@@ -65,6 +70,7 @@ export class OrdersController {
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard)
   async update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto): Promise<any> {
     const updatedOrder = await this.ordersService.updateOrder(Number(id), updateOrderDto);
 
@@ -77,6 +83,7 @@ export class OrdersController {
   }
  
   @Patch(':id')
+  @UseGuards(AuthGuard)
   async updatePartial(@Param('id') id: string, @Body() updateOrderDto: partialUpdateOrderDto): Promise<any> {
     const order = await this.ordersService.updatePartialOrder(Number(id), updateOrderDto);
 
@@ -89,6 +96,7 @@ export class OrdersController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   async delete(@Param('id') id: string): Promise<{ message: string }> {
     await this.ordersService.deleteOrder(Number(id));
     return { message: 'deleted' };
