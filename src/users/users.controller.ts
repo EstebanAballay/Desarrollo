@@ -1,70 +1,34 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { LoginDTO } from '../interfaces/login.dto';
-import { RegisterDTO } from '../interfaces/register.dto';
-import { Request } from 'express';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RequestWithUser } from 'src/interfaces/request-user';
-import { AssignRolesDto } from 'src/interfaces/AssignRoles.dto';
-import { Permissions } from 'src/middlewares/decorators/permissions.decorator';
-import { AuthGuard } from '../auth/auth.guard';
-
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
-  constructor(private service: UsersService) {}
+  constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard, AuthGuard)
-  @Permissions(['myEmail'])
-  @Get('me')
-  me(@Req() req: RequestWithUser) {
-    return { email: req.user.email };
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
   }
 
-  @Post('login')
-  login(@Body() body: LoginDTO) {
-    return this.service.login(body);
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard, AuthGuard)
-  @Permissions(['user-create'])
-  @Post('register')
-  register(@Body() body: RegisterDTO) {
-    return this.service.register(body);
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(+id);
   }
 
-  @UseGuards(JwtAuthGuard, AuthGuard)
-  @Permissions(['verify-permission'])
-  @Get('can-do/:permission')
-  canDo(@Req() request: RequestWithUser, @Param('permission') permission: string) {
-    return this.service.canDo(request.user, permission);
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(+id, updateUserDto);
   }
 
-  @Get('refresh-token')
-  refreshToken(@Req() request: Request) {
-    return this.service.refreshToken(request.headers['refresh-token'] as string);
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.usersService.remove(+id);
   }
-
-  @Post('assign-role')
-  @UseGuards(JwtAuthGuard, AuthGuard)
-  @Permissions(['role-assign'])
-  assignRole(@Body() assignRolesDto: AssignRolesDto) {
-    return this.service.assignRoles(assignRolesDto);
-  }
-
-  @Get('users')
-  @UseGuards(JwtAuthGuard, AuthGuard)
-  @Permissions(['all-users'])
-  async findAll() {
-    return this.service.findAllUsers();
-  }
-
 }

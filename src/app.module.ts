@@ -16,6 +16,8 @@ import { transactionDetail } from './payments/transactionDetail.entity';
 import { transactionStatus } from './payments/transactionstatus.entity';
 import { State } from './orders/state.entity';
 import { refund } from './payments/refund.entity';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -29,7 +31,7 @@ import { refund } from './payments/refund.entity';
       entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod, State,refund],
       synchronize: true,
     }),
-    TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction, State,refund]),PaymentsModule],
+    TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction, State,refund]),PaymentsModule, UsersModule, AuthModule],
   controllers: [OrdersController, AppController],
   providers: [OrdersService, AppService],
 })
