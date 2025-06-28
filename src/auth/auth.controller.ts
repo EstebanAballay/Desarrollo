@@ -1,8 +1,25 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Request, UseGuards} from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Req,
+  HttpStatus,
+  Post,
+  Request,
+  UseGuards,
+} from "@nestjs/common";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { AuthService } from "./auth.service";
 import { AuthGuard } from "./guard/auth.guard";
+import { RolesGuard } from "./guard/roles.guard";
+import { Role } from "../common/enums/role.enum";
+import { Auth } from "./decorators/auth.decorator";
+
+interface RequestWithUser extends Request {
+  user: { email: string; role: string };
+}
 
 @Controller("auth")
 export class AuthController {
@@ -19,12 +36,11 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('profile')
-  @UseGuards(AuthGuard)
-  profile(
-    @Request() 
-    req
-  ) {
-  return req.user;
+  @Get("profile")
+  @Auth(Role.CLIENT) // le paso el rol solamente, dentro de Auth llama a los dos 
+  @UseGuards(AuthGuard, RolesGuard) // guard para verificar tanto la autenticacion 
+  profile(@Req() req: RequestWithUser) { // como la autorizacion desde el token
+    return req.user;
+  }
 }
-}
+

@@ -18,17 +18,18 @@ import { State } from './orders/state.entity';
 import { refund } from './payments/refund.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
-      port: 5432,
+      port: 5450,
       username: 'postgres',
       password: 'mipassword',
       database: 'ordenes_pagos',
-      entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod, State,refund],
+      entities: [Order, Transaction, transactionDetail, transactionStatus, PaymentMethod, State,refund,User],
       synchronize: true,
     }),
     TypeOrmModule.forFeature([Order, PaymentMethod, transactionDetail, transactionStatus, Transaction, State,refund]),PaymentsModule, UsersModule, AuthModule],
