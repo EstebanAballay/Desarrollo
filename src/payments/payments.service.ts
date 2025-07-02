@@ -22,25 +22,42 @@ export class PaymentsService {
                 @InjectRepository(refund) private readonly refundRepo: Repository<refund>) {}
 
 
-    async findAllPayments(page = 1, limit = 10): Promise<{ data: Transaction[]; total: number }> {
+    async findAllPayments(page = 1, limit = 10, userId?: number): Promise<{ data: Transaction[]; total: number }> {
+        const whereClause = userId ? { userId } : {};
         const [data, total] = await this.transactionRepo.findAndCount({
-            relations:['transactionDetails', 'transactionDetails.paymentState', 'paymentMethod'],
-        skip: (page - 1) * limit,
-        take: limit,
-    });
+    where: whereClause,
+    relations: ['transactionDetails', 'transactionDetails.paymentState', 'paymentMethod'],
+    skip: (page - 1) * limit,
+    take: limit,
+  });
 
     return { data, total };
-    }   
-
+    }
  
-    async findPaymentById(id: number) {
+ 
+    async findPaymentById(id: number, userId: number, isAdmin: boolean) {
         const payment = await this.transactionRepo.findOne({ 
             where: { id },
             relations: ['paymentMethod', 'transactionDetails', 'transactionDetails.paymentState'],
         });
         if (!payment) throw new NotFoundException('Payment not found');
+        if (!isAdmin && payment.userId !== userId) {
+            throw new BadRequestException('No tienes permiso para ver este pago');
+            }
         return payment;
     }
+
+    async findPaymentsByUser(userId: number, page = 1, limit = 10): Promise<{ data: Transaction[]; total: number }> {
+        const [data, total] = await this.transactionRepo.findAndCount({
+            where: { userId: userId },
+            relations: ['transactionDetails', 'transactionDetails.paymentState', 'paymentMethod'],
+            skip: (page - 1) * limit,
+            take: limit,
+        });
+
+        return { data, total };
+    }
+
 
     async createPayment(data: CreatePaymentDto) {
         // Buscar el método de pago por nombre para almacenar su puntero y tiro una excepcion si no existe
@@ -66,6 +83,7 @@ export class PaymentsService {
         //crea finalmente el pago
         const newPayment = this.transactionRepo.create({
             orderId: data.orderId,
+            userId: data.userId,
             amount: data.amount,
             paymentMethod: paymentMethod, // Asignar la entidad completa(puntero)
             transactionDetails:transactionDetail , // Asignar el estado de pago
@@ -77,9 +95,9 @@ export class PaymentsService {
         return this.transactionRepo.save(newPayment);
     }
 
-    async updatePaymentStatus(id: number, dto: UpdateStatusDto) {
+    async updatePaymentStatus(id: number, dto: UpdateStatusDto, userId: number, isAdmin: boolean) {
         //Primero busco el pago por id
-        const payment = await this.findPaymentById(id);
+        const payment = await this.findPaymentById(id, userId, isAdmin);
         //luego compruebo que ese estado exista y sino lanza error
         const paymentState = await this.transactionStatusRepo.findOne({
             where: { name: dto.status}
@@ -93,10 +111,10 @@ export class PaymentsService {
         //Guardo el cambio, NO OLVIDAR EL AWAIT,SINO SE GUARDAN LOS CAMBIOS A LA SIGUIENTE PETICION 
         await this.transactionRepo.save(payment);
         //Devuelvo el objeto actualizado
-        return this.findPaymentById(id);
+        return this.findPaymentById(id, userId, isAdmin);
     }
 
-    async refundPayment(id: number, dto: RefundDto) {
+    async refundPayment(id: number, dto: RefundDto, userId: number, isAdmin: boolean) {
         //Primero creo el refund
         const refund = this.refundRepo.create({
             reason: dto.reason,
@@ -108,7 +126,7 @@ export class PaymentsService {
         if (!refundState) {
             throw new BadRequestException(`Payment state 'refunded' not found`);}
 
-        const paymentToRefund = await this.findPaymentById(id);
+        const paymentToRefund = await this.findPaymentById(id, userId, isAdmin);
         if (!paymentToRefund) {
             throw new NotFoundException(`Payment with id ${id} not found`);
         }
@@ -116,7 +134,7 @@ export class PaymentsService {
         paymentToRefund.transactionDetails.paymentState = refundState;
         await this.transactionRepo.save(paymentToRefund);
         //Ahora busco el pago para el cual asignare el refund creado
-        const payment = await this.findPaymentById(id);
+        const payment = await this.findPaymentById(id, userId, isAdmin);
         //Ahora asigno el refund al pago
         payment.refundDetails = refund;
         await this.refundRepo.save(refund); 
@@ -133,8 +151,8 @@ export class PaymentsService {
             };
     };
 
-    async deletePayment(id: number) {
-        const payment = await this.findPaymentById(id);
+    async deletePayment(id: number, userId: number, isAdmin: boolean) {
+        const payment = await this.findPaymentById(id, userId, isAdmin);
         await this.transactionRepo.remove(payment);
         return { message: 'deleted' };
     }

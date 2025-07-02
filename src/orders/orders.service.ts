@@ -31,8 +31,23 @@ export class OrdersService {
   const [result, total] = await this.ordersRepository.findAndCount({
     skip: (page - 1) * limit,
     take: limit,
-    order: { id: 'ASC' }, 
-    relations: ['status'], 
+    order: { id: 'ASC' },
+    relations: ['status']
+  });
+
+  return {
+    data: result,
+    total: total
+  };
+  }
+
+  async getOrdersByUser(userId: number, page = 1, limit = 10): Promise<{ data: Order[]; total: number }> {
+  const [result, total] = await this.ordersRepository.findAndCount({
+    where: { userId },
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { id: 'ASC' },
+    relations: ['status'],
   });
 
   return {

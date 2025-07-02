@@ -7,9 +7,12 @@ import {
   Patch,
   Delete,
   Put,
+  Req,
   Query,
-  UseGuards
+  UseGuards,
+  ForbiddenException
 } from '@nestjs/common';
+import { Request } from 'express';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {Order} from './order.entity';
@@ -19,6 +22,14 @@ import { AuthGuard } from "../auth/guard/auth.guard";
 import { RolesGuard } from "../auth/guard/roles.guard";
 import { Role } from "../common/enums/role.enum";
 import { Auth } from "../auth/decorators/auth.decorator";
+
+interface RequestWithUser extends Request {
+  user: {
+    id: number;
+    email: string;
+    role: string;
+  };
+}
 
 @Controller('order')
 export class OrdersController {
@@ -39,15 +50,22 @@ export class OrdersController {
   }
 
   @Get()
-  @Auth(Role.CLIENT)
-  @UseGuards(AuthGuard, RolesGuard)
-  async findAll(
+@Auth(Role.CLIENT)
+@UseGuards(AuthGuard, RolesGuard)
+async findAll(
   @Query('page') page = '1',
-  @Query('limit') limit = '10'): Promise<any> {
+  @Query('limit') limit = '10',
+  @Req() req: RequestWithUser, 
+): Promise<any> {
   const pageNumber = parseInt(page);
   const limitNumber = parseInt(limit);
 
-  const { data, total } = await this.ordersService.getAllOrders(pageNumber, limitNumber);
+  const user = req.user; // ya tiene tipado
+  const isAdmin = user.role === Role.ADMIN;
+
+  const { data, total } = isAdmin
+    ? await this.ordersService.getAllOrders(pageNumber, limitNumber)
+    : await this.ordersService.getOrdersByUser(user.id, pageNumber, limitNumber);
 
   return {
     data: data.map(order => ({ 
@@ -65,8 +83,14 @@ export class OrdersController {
   @Get(':id')
   @Auth(Role.CLIENT)
   @UseGuards(AuthGuard, RolesGuard)
-  async findOne(@Param('id') id: string): Promise<any> {
+  async findOne(@Param('id') id: string, @Req() req: RequestWithUser): Promise<any> {
+    const user = req.user as any;
     const order = await this.ordersService.getOrderById(Number(id));
+
+    if (user.role !== Role.ADMIN && order.userId !== user.id) { // No tiene permiso para ver esta orden
+      throw new ForbiddenException('No tienes permiso para ver esta orden');
+    }
+
     return {
       id: order.id,
       status: order.status.value,

@@ -14,6 +14,10 @@ export class CreatePaymentDto {
 
     @IsNumber()
     @IsNotEmpty()
+    userId: number;
+
+    @IsNumber()
+    @IsNotEmpty()
     amount: number;
 
     @IsString()

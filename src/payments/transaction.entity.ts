@@ -12,6 +12,9 @@ export class Transaction {
     orderId: number;
 
     @Column()
+    userId: number;
+
+    @Column()
     amount: number;
 
     //En esta columna de la bd guardo el puntero al metodo de pago
